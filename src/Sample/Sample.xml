@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Sample</name>
+    </assembly>
+    <members>
+        <member name="T:SampleConsole.Person">
+            <summary>
+            人类
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Id">
+            <summary>
+            Id
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Name">
+            <summary>
+            名字
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Birthday">
+            <summary>
+            出生日期
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Sex">
+            <summary>
+            性别
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.CityId">
+            <summary>
+            所在城市
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.IsAvailable">
+            <summary>
+            是否启用
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Password">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Spouse">
+            <summary>
+            配偶
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Hobby">
+            <summary>
+            爱好
+            </summary>
+        </member>
+        <member name="T:SampleConsole.SexType">
+            <summary>
+            性别
+            </summary>
+        </member>
+        <member name="F:SampleConsole.SexType.Man">
+            <summary>
+            男性
+            </summary>
+        </member>
+        <member name="F:SampleConsole.SexType.Woman">
+            <summary>
+            女性
+            </summary>
+        </member>
+        <member name="F:SampleConsole.SexType.Ladyman">
+            <summary>
+            人妖
+            </summary>
+        </member>
+    </members>
+</doc>

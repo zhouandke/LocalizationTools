@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>LocalizationToolsTest</name>
+    </assembly>
+    <members>
+        <member name="T:LocalizationToolsTest.LocalizationToolsTest">
+            <summary>
+            LocalizationTools 测试
+            </summary>
+        </member>
+        <member name="M:LocalizationToolsTest.LocalizationToolsTest.ToStringTest">
+            <summary>
+            ToString 测试
+            </summary>
+        </member>
+        <member name="M:LocalizationToolsTest.LocalizationToolsTest.CompareTest">
+            <summary>
+            Compare 测试
+            </summary>
+        </member>
+        <member name="T:LocalizationToolsTest.Person">
+            <summary>
+            自然人
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.Id">
+            <summary>
+             唯一性标识
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.Name">
+            <summary>
+            名字, 在 summary 里可能会被加入各种其他说明, 所以用 [DisplayName] 来替换
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.CityId">
+            <summary>
+            所在城市
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.Sex">
+            <summary>
+            性别
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.Height">
+            <summary>
+            身高
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.Password">
+            <summary>
+            密码
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.CanLogin">
+            <summary>
+            是否可以登录
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Person.GraduateDate">
+            <summary>
+            毕业时间
+            </summary>
+        </member>
+        <member name="T:LocalizationToolsTest.SexType">
+            <summary>
+            性别
+            </summary>
+        </member>
+        <member name="F:LocalizationToolsTest.SexType.Man">
+            <summary>
+            男性
+            </summary>
+        </member>
+        <member name="F:LocalizationToolsTest.SexType.Woman">
+            <summary>
+            女性, balabalabalabalabalabalabalabalabala
+            </summary>
+        </member>
+        <member name="T:LocalizationToolsTest.Employe">
+            <summary>
+            员工
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Employe.Id">
+            <summary>
+             唯一性标识
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Employe.Name">
+            <summary>
+            名字
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Employe.Sex">
+            <summary>
+            性别
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Employe.CanLogin">
+            <summary>
+            可否登录
+            </summary>
+        </member>
+        <member name="P:LocalizationToolsTest.Employe.Partner">
+            <summary>
+            搭档
+            </summary>
+        </member>
+    </members>
+</doc>
