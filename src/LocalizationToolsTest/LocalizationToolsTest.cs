@@ -158,16 +158,36 @@ namespace LocalizationToolsTest
             actual = compareResult.GetDifferenceMsg(new[] { nameof(Employe.Name), nameof(Employe.Sex), nameof(Employe.Partner) });
             Assert.AreEqual(expected, actual);
 
-            compareResult.UpdateDifferentProperty(nameof(Employe.Name), "王大锤", new { 姓 = "王", 名 = "大锤" });
+
+            var updateDifferentPropertyResult = compareResult.UpdateDifferentProperty(nameof(Employe.Name), "王大锤", "王大锤");
+            Assert.AreEqual(updateDifferentPropertyResult, false);
+            // 没有跟新成功, to值不应该改变
+            actual = compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To;
+            Assert.AreEqual(actual, "\"王小锤\"");
+
+            updateDifferentPropertyResult = compareResult.UpdateDifferentProperty(nameof(Employe.Name), "王大锤", new { 姓 = "王", 名 = "大锤" });
             Assert.AreEqual("\"王大锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).From);
             expected = "{\"姓\":\"王\",\"名\":\"大锤\"}";
             actual = compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To;
             Assert.AreEqual(expected, actual);
+            Assert.AreEqual(updateDifferentPropertyResult, true);
+
 
             expected = "{\"名字\":{\"从\":\"王大锤\",\"变成\":{\"姓\":\"王\",\"名\":\"大锤\"}},\"性别\":{\"从\":\"男性\",\"变成\":\"Ladyman\"},\"搭档\":{\"从\":{\"唯一性标识\":2,\"名字\":\"渣渣\",\"性别\":\"男性\",\"可否登录\":\"未配置\",\"搭档\":\"没有搭档\"},\"变成\":\"没有搭档\"}}";
             actual = compareResult.GetDifferenceMsg();
             Assert.AreEqual(expected, actual);
 
+
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                compareResult.AddNewDifferentProperty("名字", "111", "111", nameof(Employe.Name));
+            });
+            Assert.ThrowsException<ArgumentException>(() =>
+            {
+                compareResult.AddNewDifferentProperty("名字", "111", "111", "NotExistPropertyName");
+            });
+            compareResult.AddNewDifferentProperty("地址", "北街", "胡同1号", "Address");
+            Assert.AreEqual(compareResult.IsPropertyDifferent("Address"), true);
 
 
             compareResult = LocalizationTools.CompareInclude(e1, e2, new[] { nameof(Employe.Name) });
@@ -184,6 +204,11 @@ namespace LocalizationToolsTest
             expected = "{\"名字\":{\"从\":\"王大锤\",\"变成\":\"王小锤\"}}";
             actual = compareResult.GetDifferenceMsg();
             Assert.AreEqual(expected, actual);
+
+
+            compareResult.DifferentProperties.Clear();
+            Assert.AreEqual(compareResult.HasDifference, false);
+
         }
     }
 

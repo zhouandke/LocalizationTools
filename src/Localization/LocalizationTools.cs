@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -13,6 +14,7 @@ namespace Localization
         // 缓存反射的结果
         private static readonly Dictionary<Type, TypeInfo> typePropertyCache = new Dictionary<Type, TypeInfo>(4096);//先分 4096 个容量吧
         private static readonly Dictionary<Type, Dictionary<object, string>> enumCache = new Dictionary<Type, Dictionary<object, string>>(4096);
+
         /// <summary>
         /// key value 之间的分隔符
         /// </summary>
@@ -183,6 +185,12 @@ namespace Localization
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
         }
 
+        /// <summary>
+        /// 获取枚举值的别名, 优先从 summary 中获取, 其次从 EnumAliasAttribute 中获取
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="enumValue"></param>
+        /// <returns></returns>
         public static string GetEnumAlias<T>(T enumValue)
             where T : struct
         {
@@ -190,6 +198,12 @@ namespace Localization
             return GetEnumAlias(type, enumValue);
         }
 
+        /// <summary>
+        /// 获取枚举值的别名, 优先从 summary 中获取, 其次从 EnumAliasAttribute 中获取
+        /// </summary>
+        /// <param name="enumType"></param>
+        /// <param name="enumValue"></param>
+        /// <returns></returns>
         public static string GetEnumAlias(Type enumType, object enumValue)
         {
             Dictionary<object, string> enumValueDict;
@@ -232,8 +246,41 @@ namespace Localization
             return result;
         }
 
+        /// <summary>
+        /// 获取 class 的展示名称
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static string GetDisplayName<T>()
+        {
+            return GetTypeInfo(typeof(T)).DispalyName;
+        }
 
-
+        /// <summary>
+        /// 获取属性的展示名称
+        /// </summary>
+        /// <typeparam name="T">属于的class</typeparam>
+        /// <param name="selector">字段或属性的选择器</param>
+        /// <returns></returns>
+        public static string GetDisplayName<T>(Expression<Func<T, object>> selector)
+        {
+            var typePropertyInfos = GetTypeInfo(typeof(T)).TypePropertyInfos;
+            string memberName;
+            if (selector.Body is UnaryExpression unaryExpression)
+            {
+                memberName = (unaryExpression.Operand as MemberExpression).Member.Name;
+            }
+            else if (selector.Body is MemberExpression memberExpression)
+            {
+                memberName = memberExpression.Member.Name;
+            }
+            else
+            {
+                throw new Exception($"{nameof(GetDisplayName)} not support");
+            }
+            var typePropertyInfo = typePropertyInfos.First(o => o.PropertyName == memberName);
+            return typePropertyInfo.DispalyName;
+        }
 
 
         public static string ToString(object obj, params string[] ignorePropertyNames)
@@ -423,14 +470,7 @@ namespace Localization
 
                 if (stringOfFrom != stringOfTo)
                 {
-                    compareResult.HasDifference = true;
-                    compareResult.DifferentProperties.Add(new DifferentProperty()
-                    {
-                        PropertyName = typePropertyInfo.PropertyName,
-                        DispalyName = typePropertyInfo.DispalyName,
-                        From = stringOfFrom,
-                        To = stringOfTo
-                    });
+                    compareResult.DifferentProperties.Add(new DifferentProperty(typePropertyInfo.PropertyName, typePropertyInfo.DispalyName, stringOfFrom, stringOfTo));
                 }
             }
             return compareResult;
@@ -473,6 +513,7 @@ namespace Localization
         }
     }
 
+
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
     public class ToStringReplacePairAttribute : Attribute
     {
@@ -499,6 +540,7 @@ namespace Localization
         }
     }
 
+
     public class ReplacePair
     {
         public ReplacePair(object orginal, object replace)
@@ -518,7 +560,7 @@ namespace Localization
         internal CompareResult()
         { }
 
-        public bool HasDifference { get; internal set; }
+        public bool HasDifference { get { return DifferentProperties.Count > 0; } }
 
         public List<DifferentProperty> DifferentProperties { get; } = new List<DifferentProperty>();
 
@@ -534,9 +576,50 @@ namespace Localization
             {
                 return false;
             }
-            differentProperty.From = LocalizationTools.ToString(newFromValue);
-            differentProperty.To = LocalizationTools.ToString(newToValue);
+
+            // 如果传入的两个值是相等的, 则不更新
+            var from = LocalizationTools.ToString(newFromValue);
+            var to = LocalizationTools.ToString(newToValue);
+            if (from == to)
+            {
+                return false;
+            }
+
+            differentProperty.From = from;
+            differentProperty.To = to;
             return true;
+        }
+
+        public void AddNewDifferentProperty(string dispalyName, object newFromValue, object newToValue, string propertyName = null)
+        {
+            if (string.IsNullOrWhiteSpace(dispalyName))
+            {
+                throw new ArgumentException($"{ nameof(dispalyName)} can't be empty", nameof(dispalyName));
+            }
+            dispalyName = dispalyName.Trim().Replace('"', ',');
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                propertyName = dispalyName;
+            }
+            else
+            {
+                propertyName = propertyName.Trim();
+            }
+
+            if (DifferentProperties.Any(o => o.PropertyName == propertyName))
+            {
+                throw new ArgumentException($"DifferentProperties has exist {propertyName}, if you need update, please use UpdateDifferentProperty() method", nameof(propertyName));
+            }
+
+            var from = LocalizationTools.ToString(newFromValue);
+            var to = LocalizationTools.ToString(newToValue);
+            if (from == to)
+            {
+                throw new ArgumentException($"newFromValue is same to newToValue");
+            }
+
+            var differentProperty = new DifferentProperty(propertyName, dispalyName, from, to);
+            DifferentProperties.Add(differentProperty);
         }
 
         public string GetDifferenceMsg(IEnumerable<string> ignorePropertyNames = null)
@@ -557,11 +640,24 @@ namespace Localization
             sb.Append('}');
             return sb.ToString();
         }
+
+        public override string ToString()
+        {
+            return GetDifferenceMsg();
+        }
     }
 
 
     public class DifferentProperty
     {
+        public DifferentProperty(string propertyName, string dispalyName, string from, string to)
+        {
+            PropertyName = propertyName;
+            DispalyName = dispalyName;
+            From = from;
+            To = to;
+        }
+
         public string PropertyName { get; internal set; }
 
         public string DispalyName { get; internal set; }
