@@ -209,6 +209,11 @@ namespace LocalizationToolsTest
             compareResult.DifferentProperties.Clear();
             Assert.AreEqual(compareResult.HasDifference, false);
 
+
+            var o1 = new Order() { Id = 1, OrderNo = "1111", Amount = 999M };
+            var o2 = new Order() { Id = 1, OrderNo = "1111", Amount = 999.00M };
+            compareResult = LocalizationTools.Compare(o1, o2);
+            Assert.AreEqual(false, compareResult.HasDifference);
         }
     }
 
@@ -315,5 +320,23 @@ namespace LocalizationToolsTest
         /// </summary>
         [ToStringReplacePair(null, "没有搭档")]
         public Employe Partner { get; set; }
+    }
+
+    public class Order
+    {
+        /// <summary>
+        /// Id
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
+        /// 订单编号
+        /// </summary>
+        public string OrderNo { get; set; }
+
+        /// <summary>
+        /// 订单金额
+        /// </summary>
+        public decimal Amount { get; set; }
     }
 }

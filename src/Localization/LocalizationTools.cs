@@ -465,12 +465,27 @@ namespace Localization
                 {
                     continue;
                 }
-                var stringOfFrom = GetPropertyStringValue(fromObject, typePropertyInfo, null, 0);
-                var stringOfTo = GetPropertyStringValue(toObject, typePropertyInfo, null, 0);
-
-                if (stringOfFrom != stringOfTo)
+                // 对于 decimal,  999M 和 999.00M 两个的ToString()结果是 "999" 和 "999.00", 不能直接用 ToString() 比较; 这是一个特例, 先用这种方式fix, 以后看看有没有其他更好的方法
+                if (typePropertyInfo.PropertyInfo.PropertyType == typeof(decimal) || typePropertyInfo.PropertyInfo.PropertyType == typeof(decimal?))
                 {
-                    compareResult.DifferentProperties.Add(new DifferentProperty(typePropertyInfo.PropertyName, typePropertyInfo.DispalyName, stringOfFrom, stringOfTo));
+                    var fromValue = typePropertyInfo.PropertyInfo.GetValue(fromObject);
+                    var toValue = typePropertyInfo.PropertyInfo.GetValue(toObject);
+                    if (!object.Equals(fromValue, toValue))
+                    {
+                        var stringOfFrom = GetPropertyStringValue(fromObject, typePropertyInfo, null, 0);
+                        var stringOfTo = GetPropertyStringValue(toObject, typePropertyInfo, null, 0);
+                        compareResult.DifferentProperties.Add(new DifferentProperty(typePropertyInfo.PropertyName, typePropertyInfo.DispalyName, stringOfFrom, stringOfTo));
+                    }
+                }
+                else
+                {
+                    var stringOfFrom = GetPropertyStringValue(fromObject, typePropertyInfo, null, 0);
+                    var stringOfTo = GetPropertyStringValue(toObject, typePropertyInfo, null, 0);
+
+                    if (stringOfFrom != stringOfTo)
+                    {
+                        compareResult.DifferentProperties.Add(new DifferentProperty(typePropertyInfo.PropertyName, typePropertyInfo.DispalyName, stringOfFrom, stringOfTo));
+                    }
                 }
             }
             return compareResult;
