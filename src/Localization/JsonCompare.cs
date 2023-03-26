@@ -11,13 +11,14 @@ namespace Localization2
         EvertyItem = 1
     }
 
-    public class Operation
+
+    public class DiffItem
     {
         [JsonProperty(PropertyName = "属性")]
         public string Path { get; set; }
 
         [JsonProperty(PropertyName = "操作")]
-        public string Op { get; set; }
+        public string Operation { get; set; }
 
         [JsonProperty(PropertyName = "原值", NullValueHandling = NullValueHandling.Ignore, Order = 10)]
         public virtual JToken From { get; set; }
@@ -25,40 +26,40 @@ namespace Localization2
         [JsonProperty(PropertyName = "新值", NullValueHandling = NullValueHandling.Ignore, Order = 11)]
         public virtual JToken To { get; set; }
 
-        public static Operation Add(string path, JToken to)
+        public static DiffItem DiffAdd(string path, JToken to)
         {
-            return new Operation()
+            return new DiffItem()
             {
                 Path = path,
-                Op = "新增",
+                Operation = "新增",
                 From = null,
                 To = to
             };
         }
 
-        public static Operation Remove(string path, JToken from)
+        public static DiffItem DiffRemove(string path, JToken from)
         {
-            return new Operation()
+            return new DiffItem()
             {
                 Path = path,
-                Op = "删除",
+                Operation = "删除",
                 From = from,
                 To = null
             };
         }
 
-        public static Operation Replace(string path, JToken from, JToken to)
+        public static DiffItem DiffChange(string path, JToken from, JToken to)
         {
-            return new ReplaceOperation()
+            return new ChangeDiffItem()
             {
                 Path = path,
-                Op = "修改",
+                Operation = "修改",
                 From = from,
                 To = to
             };
         }
 
-        private class ReplaceOperation : Operation
+        private class ChangeDiffItem : DiffItem
         {
             [JsonProperty(PropertyName = "原值", Order = 10)]
             public override JToken From { get; set; }
@@ -78,25 +79,25 @@ namespace Localization2
             ArrayDiffMode = rrayDiffMode;
         }
 
-        public Operation[] Compare<T>(T from, T to, params string[] ignorePathes)
+        public DiffItem[] Compare<T>(T from, T to, params string[] ignorePaths)
         {
-            var fromJson = Lts.Default.Localization(from, null, ignorePathes: ignorePathes);
-            var toJson = Lts.Default.Localization(to, null, ignorePathes: ignorePathes);
+            var fromJson = Lts.Default.Localization(from, null, ignorePaths: ignorePaths);
+            var toJson = Lts.Default.Localization(to, null, ignorePaths: ignorePaths);
             return Compare(fromJson, toJson);
         }
 
-        public Operation[] Compare(string fromJson, string toJson)
+        public DiffItem[] Compare(string fromJson, string toJson)
         {
             var from = JToken.Parse(fromJson);
             var to = JToken.Parse(toJson);
             return CompareInternal(from, to, "").ToArray();
         }
 
-        public IEnumerable<Operation> CompareInternal(JToken from, JToken to, string path)
+        public IEnumerable<DiffItem> CompareInternal(JToken from, JToken to, string path)
         {
             if (from.Type != to.Type)
             {
-                yield return Operation.Replace(path, from, to);
+                yield return DiffItem.DiffChange(path, from, to);
                 yield break;
             }
 
@@ -106,7 +107,7 @@ namespace Localization2
                 {
                     if (from.ToString() != to.ToString())
                     {
-                        yield return Operation.Replace(path, from, to);
+                        yield return DiffItem.DiffChange(path, from, to);
                     }
                 }
                 else
@@ -123,13 +124,13 @@ namespace Localization2
                 foreach (var added in toProps.Except(fromProps, KeyValuePairEqualByKey.Instance))
                 {
                     var newPath = Help.Combine(path, added.Key);
-                    yield return Operation.Replace(newPath, null, added.Value);
+                    yield return DiffItem.DiffChange(newPath, null, added.Value);
                 }
 
                 foreach (var removed in fromProps.Except(toProps, KeyValuePairEqualByKey.Instance))
                 {
                     var newPath = Help.Combine(path, removed.Key);
-                    yield return Operation.Replace(newPath, removed.Value, null);
+                    yield return DiffItem.DiffChange(newPath, removed.Value, null);
                 }
 
                 var matchedKeys = fromProps.Select(Kvp => Kvp.Key).Intersect(toProps.Select(kvp => kvp.Key));
@@ -150,12 +151,12 @@ namespace Localization2
                 }
                 else
                 {
-                    yield return Operation.Replace(path, from, to);
+                    yield return DiffItem.DiffChange(path, from, to);
                 }
             }
         }
 
-        private IEnumerable<Operation> ArrayCompare(JToken from, JToken to, string path)
+        private IEnumerable<DiffItem> ArrayCompare(JToken from, JToken to, string path)
         {
             var fromArray = from.ToArray();
             var toArray = to.ToArray();
@@ -173,7 +174,7 @@ namespace Localization2
             {
                 while (index < fromArray.Length)
                 {
-                    yield return Operation.Remove($"{path}[{index}]", fromArray[index]);
+                    yield return DiffItem.DiffRemove($"{path}[{index}]", fromArray[index]);
                     index++;
                 }
             }
@@ -182,7 +183,7 @@ namespace Localization2
             {
                 while (index < toArray.Length)
                 {
-                    yield return Operation.Add($"{path}[{index}]", toArray[index]);
+                    yield return DiffItem.DiffAdd($"{path}[{index}]", toArray[index]);
                     index++;
                 }
             }

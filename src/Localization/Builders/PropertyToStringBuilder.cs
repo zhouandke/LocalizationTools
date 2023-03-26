@@ -102,7 +102,7 @@ namespace Localization2
             foreach (var typePropertyInfo in TypePropertyInfos)
             {
                 var ignorePath = Help.Combine(pathForIgnore, typePropertyInfo.PropertyInfo.Name);
-                if (context.IgnorePathes?.Contains(ignorePath) == true)
+                if (context.IgnorePaths?.Contains(ignorePath) == true)
                 {
                     continue;
                 }

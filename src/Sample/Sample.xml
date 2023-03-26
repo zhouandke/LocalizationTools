@@ -21,7 +21,7 @@
         </member>
         <member name="P:SampleConsole.Person.Birthday">
             <summary>
-            出生日期
+            出生
             </summary>
         </member>
         <member name="P:SampleConsole.Person.Sex">
@@ -44,24 +44,24 @@
             密码
             </summary>
         </member>
-        <member name="P:SampleConsole.Person.Spouse">
-            <summary>
-            配偶
-            </summary>
-        </member>
         <member name="P:SampleConsole.Person.Hobby">
             <summary>
             爱好
             </summary>
         </member>
+        <member name="P:SampleConsole.Person.Spouse">
+            <summary>
+            配偶
+            </summary>
+        </member>
+        <member name="P:SampleConsole.Person.Children">
+            <summary>
+            子女
+            </summary>
+        </member>
         <member name="T:SampleConsole.SexType">
             <summary>
             性别
-            </summary>
-        </member>
-        <member name="F:SampleConsole.SexType.Man">
-            <summary>
-            男性
             </summary>
         </member>
         <member name="F:SampleConsole.SexType.Woman">
@@ -72,6 +72,11 @@
         <member name="F:SampleConsole.SexType.Ladyman">
             <summary>
             人妖
+            </summary>
+        </member>
+        <member name="T:SampleConsole.PersonBirthdayLocalization">
+            <summary>
+            Person.Birthday 没有设置有效值的话, 显示 未设置
             </summary>
         </member>
     </members>

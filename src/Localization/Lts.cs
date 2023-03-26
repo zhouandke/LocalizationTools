@@ -65,6 +65,7 @@ namespace Localization2
                             if (builder.IsMatch(type))
                             {
                                 builder.SetLocalizationer(typeInfo);
+                                break;
                             }
                         }
                     }
@@ -118,9 +119,9 @@ namespace Localization2
             return Localization(obj, context);
         }
 
-        public string Localization(object obj, object state, Dictionary<string, string> customPropertyValues = null, string[] ignorePathes = null)
+        public string Localization(object obj, object state, Dictionary<string, string> customPropertyValues = null, string[] ignorePaths = null)
         {
-            var context = new LocalizationStringContext(state ?? DefaultState, IgnoreNullProperty, customPropertyValues, ignorePathes);
+            var context = new LocalizationStringContext(state ?? DefaultState, IgnoreNullProperty, customPropertyValues, ignorePaths);
             return Localization(obj, context);
         }
 
