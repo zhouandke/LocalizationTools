@@ -232,7 +232,7 @@ namespace SampleConsole
 ```
 <br/>
 格式化后的结果
-``` csharp
+``` json
 {
   "Id": "1",
   "名字": "王大锤",
@@ -280,7 +280,7 @@ namespace SampleConsole
 ```
 <br/>
 格式化后的比较结果
-``` js
+``` json
 [
   {
     "属性": "名字",
