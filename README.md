@@ -280,7 +280,7 @@ namespace SampleConsole
 ```
 <br/>
 格式化后的比较结果
-```
+``` javascript
 [
   {
     "属性": "名字",
