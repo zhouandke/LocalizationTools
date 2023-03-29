@@ -232,7 +232,7 @@ namespace SampleConsole
 ```
 <br/>
 格式化后的结果
-``` json
+``` csharp
 {
   "Id": "1",
   "名字": "王大锤",
