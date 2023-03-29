@@ -20,16 +20,14 @@ namespace SampleConsole
                 Sex = SexType.Man,
                 Password = "12345657689",
                 IsAvailable = true,
+                Hobby = new List<string> { "吃饭", "拍视频" },
                 Spouse = new Person() { Id = 2, CityId = 21, Name = "老婆", Sex = SexType.Woman },
                 Children = new List<Person>()
-                    {
-                        new Person { Id=10, Name="王震天", CityId=10, Sex= SexType.Man },
-                        new Person { Id=11, Name="王晴雨", CityId=10, Sex= SexType.Woman }
-                    }
-
+                {
+                    new Person { Id=10, Name="王震天", CityId=10, Sex= SexType.Man },
+                    new Person { Id=11, Name="王晴雨", CityId=10, Sex= SexType.Woman }
+                }
             };
-            p1.Hobby.Add("吃饭");
-            p1.Hobby.Add("拍视频");
 
             Console.WriteLine("********** Localization(): 简单 **********");
             var str = Lts.Default.Localization(p1);
@@ -37,39 +35,65 @@ namespace SampleConsole
             Console.WriteLine();
             Console.WriteLine();
 
-            Console.WriteLine("**** Localization():使用 替换 和 忽略项 ***");
+            Console.WriteLine("********** Localization(): 复杂 **********");
             // 为 Person.Birthday 设置自定义转换程序
-            Lts.Default.SetCustomLocalization<Person, PersonBirthdayLocalization>(p => p.Birthday);
-            // 假设 10 代表北京, 21 代表成都
+            Lts.Default.SetCustomLocalization<Person, PersonCityLocalization>(p => p.CityId);
             var customPropertyValues = new Dictionary<string, string>
             {
-                { "CityId",  "北京"},
-                { "Spouse.CityId",  "上海"},
-                { "Children[0].CityId",  "北京"},  // 数组使用下标指定某个元素
-                { "Children[1].CityId",  "北京"},
+                { "Password",  "******"},
+                { "Spouse.Password",  "******"},
+                { "Children[0].Password",  "******"},  // 数组使用下标指定某个元素
+                { "Children[1].Password",  "******"},
             };
             var ignorePaths = new[]
             {
-                "Password",
-                "Spouse.Password",
-                "Children.Password"  // 忽略数组元素的某个属性, 不需要加下标 [0]
+                "Birthday",
+                "Spouse.Birthday",
+                "Children.Birthday"  // 忽略数组元素的某个属性, 不需要加下标 [0]
             };
             str = Lts.Default.Localization(p1, null, customPropertyValues, ignorePaths);
             Console.WriteLine(str);
             Console.WriteLine();
             Console.WriteLine();
 
-            //Console.WriteLine("********* Compare(): 带有忽略项 *********");
+
+
+
+            Console.WriteLine("********* Compare(string fromJson, string toJson): 忽略项在 Localization() 就已经忽略了 *********");
             var p2 = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(p1));
             p2.Name = "王小锤";
+            p2.CityId = 21;
             p2.Password = "1111111";
             p2.Spouse.Password = "1111111";
             p2.Children[1].Password = "111111";
             p2.Children[1].Name = "王下雨";
-
-            var jsonCompare = new JsonCompare();
-            var diffItems = jsonCompare.Compare(p1, p2, ignorePaths);
+            var str2 = Lts.Default.Localization(p2, null, customPropertyValues, ignorePaths);
+            var diffItems = new JsonCompare(ArrayDiffMode.Entire).Compare(str, str2);
             var compareResultJson = JsonConvert.SerializeObject(diffItems);
+            Console.WriteLine(compareResultJson);
+            Console.WriteLine();
+            Console.WriteLine();
+
+
+            Console.WriteLine("********* Compare<T>(T from, T to, params string[] ignorePaths): 带有忽略项 *********");
+            ignorePaths = new[]
+            {
+                "Birthday",
+                "Spouse.Birthday",
+                "Children.Birthday",
+                "Password",
+                "Spouse.Password",
+                "Children.Password",
+            };
+            diffItems = new JsonCompare(ArrayDiffMode.EvertyItem).Compare(p1, p2, ignorePaths);
+            // 由于不能传入 customPropertyValues, 只能手动修改差异的值 
+            //var diffItem = diffItems.FirstOrDefault(o => o.Path == "所在城市");
+            //if (diffItem != null)
+            //{
+            //    ((Newtonsoft.Json.Linq.JValue)diffItem.From).Value = "北京";
+            //    ((Newtonsoft.Json.Linq.JValue)diffItem.To).Value = "上海";
+            //}
+            compareResultJson = JsonConvert.SerializeObject(diffItems);
             Console.WriteLine(compareResultJson);
         }
     }
@@ -85,14 +109,14 @@ namespace SampleConsole
         public int Id { get; set; }
 
         /// <summary>
-        /// 名字
+        /// 名称
         /// </summary>
+        [DisplayName("名字")]
         public string Name { get; set; }
 
         /// <summary>
-        /// 出生
+        /// 出生日期
         /// </summary>
-        [DisplayName("出生日期")]
         public DateTime Birthday { get; set; }
 
         /// <summary>
@@ -154,28 +178,28 @@ namespace SampleConsole
     }
 
     /// <summary>
-    /// Person.Birthday 没有设置有效值的话, 显示 未设置
+    /// 模拟从数据库读出 City Name
     /// </summary>
-    public class PersonBirthdayLocalization : ILocalizationToString
+    public class PersonCityLocalization : ILocalizationToString
     {
-        public string ToLocalization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
         {
-            var replacePair = replacePairs?.FirstOrDefault(o => object.Equals(o.Orginal, orginalValue));
-            if (replacePair != null)
-            {
-                return Help.FormatStringValue(replacePair.Replace);
-            }
+            // 忽略 replacePairs, 全部从数据库读取
 
+            var orm = context.State; // 假设传入state 是 orm
             string stringValue;
-            if (orginalValue == null || object.Equals(orginalValue, DateTime.MinValue))
+            if (object.Equals(orginalValue, 10))
             {
-                stringValue = "未设置";
+                stringValue = "北京";
+            }
+            else if (object.Equals(orginalValue, 21))
+            {
+                stringValue = "上海";
             }
             else
             {
-                stringValue = orginalValue.ToString();
+                stringValue = $"未知城市Id={orginalValue}";
             }
-
             return Help.FormatStringValue(stringValue);
         }
     }

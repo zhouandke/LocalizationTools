@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Localization2
 {
@@ -14,10 +12,11 @@ namespace Localization2
         public PropertyToStringBuilder(ILts lts) : base(lts)
         { }
 
-        public override double MatchOrder => 400;
+        public override double MatchOrder => 1000;
 
         public override bool IsMatch(Type type)
         {
+            // 作为最后一个 Builder, 为所有类型兜底
             return true;
         }
 
@@ -54,7 +53,7 @@ namespace Localization2
                     {
                         throw new Exception(errorMsg);
                     }
-                    customlocalization = (ILocalizationToString)customLocalizationOnProperty.CustomLocalizationType.GetConstructor(new Type[0]).Invoke(new Type[0]);
+                    customlocalization = (ILocalizationToString)customLocalizationOnProperty.CustomLocalizationType.GetConstructor(Array.Empty<Type>()).Invoke(Array.Empty<Type>());
                 }
                 if (customlocalization != null)
                 {
@@ -85,7 +84,7 @@ namespace Localization2
             TypePropertyInfos = typePropertyInfos?.ToArray() ?? Array.Empty<TypePropertyInfo>();
         }
 
-        public string ToLocalization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
         {
             var replacePair = replacePairs?.FirstOrDefault(o => object.Equals(o.Orginal, orginalValue));
             if (replacePair != null)
@@ -121,13 +120,13 @@ namespace Localization2
                     continue;
                 }
 
-                stringValue = typePropertyInfo.Localizationer.Value.ToLocalization(typePropertyInfo.PropertyInfo.GetValue(orginalValue), context, propertyPath, typePropertyInfo.ReplacePairs, ignorePath);
+                stringValue = typePropertyInfo.Localizationer.Value.Localization(typePropertyInfo.PropertyInfo.GetValue(orginalValue), context, propertyPath, typePropertyInfo.ReplacePairs, ignorePath);
                 if (stringValue == null && context.IgnoreNullProperty)
                 {
                     continue;
                 }
 
-                // 如果是 null, 要输出字符串 "null"; ToLocalization 返回的结果已经包含双引号了
+                // 如果是 null, 要输出字符串 "null"; Localization 返回的结果已经包含双引号了
                 stringValue = (stringValue == null) ? "null" : stringValue;
                 kvpList.Add(new KeyValuePair<string, string>(typePropertyInfo.DisplayName, stringValue));
             }

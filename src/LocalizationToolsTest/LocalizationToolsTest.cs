@@ -1,5 +1,7 @@
-using Localization;
+using Localization2;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,92 +19,109 @@ namespace LocalizationToolsTest
         /// ToString 测试
         /// </summary>
         [TestMethod]
-        public void ToStringTest()
+        public void LocalizationTest()
         {
-            string actual, expected;
-            var person = new Person()
+            string expected, actual;
+
+            var person = new Person
             {
                 Id = 1,
                 Name = "王大锤",
-                Birthdate = DateTime.Parse("2001-02-01"),
+                Birthday = DateTime.Parse("2020-01-01"),
                 CityId = 10,
-                Password = "123456789",
                 Sex = SexType.Man,
-                Height = 170,
-                CanLogin = true,
-                GraduateDate = null
+                Password = "12345657689",
+                IsAvailable = true,
+                Hobby = new List<string> { "吃饭", "拍视频" },
+                Spouse = new Person() { Id = 2, CityId = 21, Name = "老婆", Sex = SexType.Woman },
+                Children = new List<Person>()
+                {
+                    new Person { Id=10, Name="王震天", CityId=10, Sex= SexType.Man },
+                    new Person { Id=11, Name="王晴雨", CityId=10, Sex= SexType.Woman }
+                }
             };
 
-            LocalizationTools.KeyValueSeparator = "=";
-            actual = LocalizationTools.ToString(person);
-            expected = "{\"唯一性标识\"=1,\"名字\"=\"王大锤\",\"Birthdate\"=\"2001/2/1 0:00:00\",\"所在城市\"=10,\"性别\"=\"男性\",\"身高\"=170,\"密码\"=\"123456789\",\"是否可以登录\"=true,\"毕业时间\"=null}";
-            Assert.AreEqual(expected, actual);
-
-            LocalizationTools.KeyValueSeparator = ":";
-            actual = LocalizationTools.ToString(person);
-            expected = "{\"唯一性标识\":1,\"名字\":\"王大锤\",\"Birthdate\":\"2001/2/1 0:00:00\",\"所在城市\":10,\"性别\":\"男性\",\"身高\":170,\"密码\":\"123456789\",\"是否可以登录\":true,\"毕业时间\":null}";
-            Assert.AreEqual(expected, actual);
-
-            actual = LocalizationTools.ToString(person, nameof(Person.Password));
-            expected = "{\"唯一性标识\":1,\"名字\":\"王大锤\",\"Birthdate\":\"2001/2/1 0:00:00\",\"所在城市\":10,\"性别\":\"男性\",\"身高\":170,\"是否可以登录\":true,\"毕业时间\":null}";
-            Assert.AreEqual(expected, actual);
-
-            actual = LocalizationTools.ToString(person, new { CityId = "北京" }, nameof(Person.Password));
-            expected = "{\"唯一性标识\":1,\"名字\":\"王大锤\",\"Birthdate\":\"2001/2/1 0:00:00\",\"所在城市\":\"北京\",\"性别\":\"男性\",\"身高\":170,\"是否可以登录\":true,\"毕业时间\":null}";
-            Assert.AreEqual(expected, actual);
-            actual = LocalizationTools.ToString(person, new Dictionary<string, object>() { { "CityId", "北京" } }, nameof(Person.Password));
-            Assert.AreEqual(expected, actual);
-
-
-
-
-            actual = LocalizationTools.ToStringInclude(person, new[]
-                {
-                    nameof(Person.Name),
-                    nameof(Person.Birthdate),
-                    nameof(Person.CityId),
-                    nameof(Person.Sex),
-                });
-            expected = "{\"名字\":\"王大锤\",\"Birthdate\":\"2001/2/1 0:00:00\",\"所在城市\":10,\"性别\":\"男性\"}";
-            Assert.AreEqual(expected, actual);
-
-            actual = LocalizationTools.ToStringInclude(person, new[]
-                {
-                    nameof(Person.Name),
-                    nameof(Person.Birthdate),
-                    nameof(Person.CityId),
-                    nameof(Person.Sex),
-                }, new { CityId = "北京" });
-            expected = "{\"名字\":\"王大锤\",\"Birthdate\":\"2001/2/1 0:00:00\",\"所在城市\":\"北京\",\"性别\":\"男性\"}";
-            Assert.AreEqual(expected, actual);
-            actual = LocalizationTools.ToStringInclude(person, new[]
-                {
-                    nameof(Person.Name),
-                    nameof(Person.Birthdate),
-                    nameof(Person.CityId),
-                    nameof(Person.Sex),
-                }, new Dictionary<string, object>() { { "CityId", "北京" } });
-            Assert.AreEqual(expected, actual);
-
-
-            var sexTypes = new[] { SexType.Man, SexType.Woman, SexType.Ladyman };
-            actual = LocalizationTools.ToString(sexTypes);
-            expected = "[\"男性\",\"女性\",\"Ladyman\"]";
-            Assert.AreEqual(expected, actual);
-
-
-            var employe = new Employe()
+            // 为 Person.Birthday 设置自定义转换程序
+            Lts.Default.SetCustomLocalization<Person, PersonCityLocalization>(p => p.CityId);
+            // 假设 10 代表北京, 21 代表成都
+            var customPropertyValues = new Dictionary<string, string>
             {
-                Id = 1,
-                Name = "王大锤",
-                Sex = SexType.Man,
-                CanLogin = true,
-                Partner = new Employe() { Id = 2, Name = "渣渣" },
+                { "CityId",  "北京"},
+                { "Spouse.CityId",  "上海"},
+                { "Children[0].CityId",  "北京"},  // 数组使用下标指定某个元素
+                { "Children[1].CityId",  "北京"},
             };
+            var ignorePaths = new[]
+            {
+                "Password",
+                "Spouse.Password",
+                "Children.Password"  // 忽略数组元素的某个属性, 不需要加下标 [0]
+            };
+            var json = Lts.Default.Localization(person, null, customPropertyValues, ignorePaths);
+            var jtoken = JToken.Parse(json);
 
-            actual = LocalizationTools.ToString(employe);
-            expected = "{\"唯一性标识\":1,\"名字\":\"王大锤\",\"性别\":\"男性\",\"可否登录\":\"可以登录\",\"搭档\":{\"唯一性标识\":2,\"名字\":\"渣渣\",\"性别\":\"男性\",\"可否登录\":\"未配置\",\"搭档\":\"没有搭档\"}}";
+            expected = person.Birthday.ToString();
+            actual = jtoken.SelectToken("出生日期")?.ToString();
             Assert.AreEqual(expected, actual);
+
+            expected = "北京";
+            actual = jtoken.SelectToken("所在城市")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            expected = "男性";
+            actual = jtoken.SelectToken("性别")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            actual = jtoken.SelectToken("密码")?.ToString();
+            Assert.IsNull(actual);
+
+            expected = "是";
+            actual = jtoken.SelectToken("是否启用")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            expected = JsonConvert.SerializeObject(person.Hobby);
+            actual = jtoken.SelectToken("爱好")?.ToString()?.Replace("\r\n", "")?.Replace(" ", "");
+            Assert.AreEqual(expected, actual);
+
+            expected = "上海";
+            actual = jtoken.SelectToken("配偶.所在城市")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            actual = jtoken.SelectToken("配偶.密码")?.ToString();
+            Assert.IsNull(actual);
+
+            actual = jtoken.SelectToken("配偶.密码")?.ToString();
+            Assert.IsNull(actual);
+
+            expected = "未设置";
+            actual = jtoken.SelectToken("配偶.是否启用")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            var expectedChildrenCount = 2;
+            var actualChildren = jtoken.SelectTokens("子女.[*]");
+            Assert.AreEqual(expectedChildrenCount, actualChildren?.Count());
+
+            expected = "北京";
+            actual = jtoken.SelectToken("子女[1].所在城市")?.ToString();
+            Assert.AreEqual(expected, actual);
+
+            actual = jtoken.SelectToken("子女[1].密码")?.ToString();
+            Assert.IsNull(actual);
+
+
+            var ignoreNullLts = new Lts() { IgnoreNullProperty = true };
+            customPropertyValues = new Dictionary<string, string>
+            {
+                { "CityId",  null},
+            };
+            json = ignoreNullLts.Localization(person, null, customPropertyValues: customPropertyValues);
+            jtoken = JToken.Parse(json);
+
+            actual = jtoken.SelectToken("所在城市")?.ToString();
+            Assert.IsNull(actual);
+
+            actual = jtoken.SelectToken("配偶.爱好")?.ToString();
+            Assert.IsNull(actual);
         }
 
         /// <summary>
@@ -111,191 +130,138 @@ namespace LocalizationToolsTest
         [TestMethod]
         public void CompareTest()
         {
-            string actual, expected;
-            var e1 = new Employe()
+            Lts.Default.SetCustomLocalization<Person, PersonCityLocalization>(p => p.CityId);
+
+            var p1 = new Person
             {
                 Id = 1,
                 Name = "王大锤",
+                Birthday = DateTime.Parse("2020-01-01"),
+                CityId = 10,
                 Sex = SexType.Man,
-                CanLogin = true,
-                Partner = new Employe() { Id = 2, Name = "渣渣" },
+                Password = "12345657689",
+                IsAvailable = true,
+                Hobby = new List<string> { "吃饭", "拍视频" },
+                Spouse = new Person() { Id = 2, CityId = 21, Name = "老婆", Sex = SexType.Woman },
+                Children = new List<Person>()
+                {
+                    new Person { Id=10, Name="王震天", CityId=10, Sex= SexType.Man },
+                    new Person { Id=11, Name="王晴雨", CityId=10, Sex= SexType.Woman }
+                }
             };
-
-            var e2 = new Employe()
+            var customPropertyValues1 = new Dictionary<string, string>
             {
-                Id = 2,
-                Name = "王小锤",
-                Sex = SexType.Ladyman,
-                CanLogin = true,
-                Partner = null,
+                { "Password",  "******"},
+                { "Spouse.Password",  "******"},
+                { "Children[0].Password",  "******"},  // 数组使用下标指定某个元素
+                { "Children[1].Password",  "******"},
             };
-
-            var compareResult = LocalizationTools.Compare(e1, e2, new[] { nameof(Employe.Id) });
-
-            Assert.IsTrue(compareResult.HasDifference);
-            Assert.AreEqual(compareResult.DifferentProperties.Count, 3);
-            Assert.IsTrue(compareResult.IsPropertyDifferent(nameof(Employe.Name)));
-            Assert.IsTrue(compareResult.IsPropertyDifferent(nameof(Employe.Sex)));
-            Assert.IsFalse(compareResult.IsPropertyDifferent(nameof(Employe.CanLogin)));
-            Assert.IsTrue(compareResult.IsPropertyDifferent(nameof(Employe.Partner)));
-
-            Assert.AreEqual("\"王大锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).From);
-            Assert.AreEqual("\"王小锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To);
-
-            Assert.AreEqual("\"男性\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Sex)).From);
-            Assert.AreEqual("\"Ladyman\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Sex)).To);
-
-            expected = "{\"唯一性标识\":2,\"名字\":\"渣渣\",\"性别\":\"男性\",\"可否登录\":\"未配置\",\"搭档\":\"没有搭档\"}";
-            actual = compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Partner)).From;
-            Assert.AreEqual(expected, actual);
-            Assert.AreEqual("\"没有搭档\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Partner)).To);
-
-            expected = "{\"名字\":{\"从\":\"王大锤\",\"变成\":\"王小锤\"},\"性别\":{\"从\":\"男性\",\"变成\":\"Ladyman\"},\"搭档\":{\"从\":{\"唯一性标识\":2,\"名字\":\"渣渣\",\"性别\":\"男性\",\"可否登录\":\"未配置\",\"搭档\":\"没有搭档\"},\"变成\":\"没有搭档\"}}";
-            actual = compareResult.GetDifferenceMsg();
-            Assert.AreEqual(expected, actual);
-
-            expected = "{}";
-            actual = compareResult.GetDifferenceMsg(new[] { nameof(Employe.Name), nameof(Employe.Sex), nameof(Employe.Partner) });
-            Assert.AreEqual(expected, actual);
-
-
-            var updateDifferentPropertyResult = compareResult.UpdateDifferentProperty(nameof(Employe.Name), "王大锤", "王大锤");
-            Assert.AreEqual(updateDifferentPropertyResult, false);
-            // 没有跟新成功, to值不应该改变
-            actual = compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To;
-            Assert.AreEqual(actual, "\"王小锤\"");
-
-            updateDifferentPropertyResult = compareResult.UpdateDifferentProperty(nameof(Employe.Name), "王大锤", new { 姓 = "王", 名 = "大锤" });
-            Assert.AreEqual("\"王大锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).From);
-            expected = "{\"姓\":\"王\",\"名\":\"大锤\"}";
-            actual = compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To;
-            Assert.AreEqual(expected, actual);
-            Assert.AreEqual(updateDifferentPropertyResult, true);
-
-
-            expected = "{\"名字\":{\"从\":\"王大锤\",\"变成\":{\"姓\":\"王\",\"名\":\"大锤\"}},\"性别\":{\"从\":\"男性\",\"变成\":\"Ladyman\"},\"搭档\":{\"从\":{\"唯一性标识\":2,\"名字\":\"渣渣\",\"性别\":\"男性\",\"可否登录\":\"未配置\",\"搭档\":\"没有搭档\"},\"变成\":\"没有搭档\"}}";
-            actual = compareResult.GetDifferenceMsg();
-            Assert.AreEqual(expected, actual);
-
-
-            Assert.ThrowsException<ArgumentException>(() =>
+            var ignorePaths1 = new[]
             {
-                compareResult.AddNewDifferentProperty("名字", "111", "111", nameof(Employe.Name));
-            });
-            Assert.ThrowsException<ArgumentException>(() =>
+                "Birthday",
+                "Spouse.Birthday",
+                "Children.Birthday"  // 忽略数组元素的某个属性, 不需要加下标 [0]
+            };
+            var json1 = Lts.Default.Localization(p1, null, customPropertyValues1, ignorePaths1);
+
+            var p2 = JsonConvert.DeserializeObject<Person>(JsonConvert.SerializeObject(p1));
+            p2.Name = "王小锤";
+            p2.CityId = 21;
+            p2.Birthday = DateTime.MinValue;
+            p2.Spouse.Sex = SexType.Ladyman;
+            p2.Children[1].Name = "王下雨";
+            p2.Children.Add(new Person { Id = 12, Name = "王倩云", CityId = 10, Sex = SexType.Woman });
+
+            var customPropertyValues2 = new Dictionary<string, string>
             {
-                compareResult.AddNewDifferentProperty("名字", "111", "111", "NotExistPropertyName");
-            });
-            compareResult.AddNewDifferentProperty("地址", "北街", "胡同1号", "Address");
-            Assert.AreEqual(compareResult.IsPropertyDifferent("Address"), true);
+                { "Password",  "******"},
+                { "Spouse.Password",  "******"},
+                { "Children[0].Password",  "******"},  // 数组使用下标指定某个元素
+                { "Children[1].Password",  "******"},
+            };
+            var ignorePaths2 = new[]
+            {
+                "Spouse.Birthday",
+                "Children.Birthday"  // 忽略数组元素的某个属性, 不需要加下标 [0]
+            };
+            var json2 = Lts.Default.Localization(p2, null, customPropertyValues2, ignorePaths2);
+
+            DiffItem[] diffItems;
+            DiffItem diffItem;
+
+            // 比较 json, 数组是默认整体比较
+            diffItems = new JsonCompare(ArrayDiffMode.Entire).Compare(json1, json2);
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "名字");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual(p1.Name, diffItem?.From.ToString());
+            Assert.AreEqual(p2.Name, diffItem?.To.ToString());
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "出生日期");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.IsNull(diffItem.From);
+            Assert.AreEqual(DateTime.MinValue.ToString(), diffItem?.To.ToString());
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "所在城市");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual("北京", diffItem?.From.ToString());
+            Assert.AreEqual("上海", diffItem?.To.ToString());
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "配偶.性别");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual("女性", diffItem?.From.ToString());
+            Assert.AreEqual("人妖", diffItem?.To.ToString());
+
+            Assert.AreEqual(5, diffItems.Length);
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "子女");
+            Assert.IsNotNull(diffItem);
+
+            // 比较 json, 详细比较数组里的每一项
+            diffItems = new JsonCompare(ArrayDiffMode.EvertyItem).Compare(json1, json2);
+            Assert.AreEqual(6, diffItems.Length);
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "子女[1].名字");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual("王晴雨", diffItem?.From.ToString());
+            Assert.AreEqual("王下雨", diffItem?.To.ToString());
+
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "子女[2]");
+            Assert.AreEqual("增加", diffItem?.Operation);
 
 
-            compareResult = LocalizationTools.CompareInclude(e1, e2, new[] { nameof(Employe.Name) });
-            Assert.IsTrue(compareResult.HasDifference);
-            Assert.AreEqual(compareResult.DifferentProperties.Count, 1);
-            Assert.IsTrue(compareResult.IsPropertyDifferent(nameof(Employe.Name)));
-            Assert.IsFalse(compareResult.IsPropertyDifferent(nameof(Employe.Sex)));
-            Assert.IsFalse(compareResult.IsPropertyDifferent(nameof(Employe.CanLogin)));
-            Assert.IsFalse(compareResult.IsPropertyDifferent(nameof(Employe.Partner)));
+            // 直接比较 两个对象
+            diffItems = new JsonCompare(ArrayDiffMode.Entire).Compare(p1, p2);
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "名字");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual(p1.Name, diffItem?.From.ToString());
+            Assert.AreEqual(p2.Name, diffItem?.To.ToString());
 
-            Assert.AreEqual("\"王大锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).From);
-            Assert.AreEqual("\"王小锤\"", compareResult.DifferentProperties.Single(o => o.PropertyName == nameof(Employe.Name)).To);
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "出生日期");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual(p1.Birthday.ToString(), diffItem?.From.ToString());
+            Assert.AreEqual(DateTime.MinValue.ToString(), diffItem?.To.ToString());
 
-            expected = "{\"名字\":{\"从\":\"王大锤\",\"变成\":\"王小锤\"}}";
-            actual = compareResult.GetDifferenceMsg();
-            Assert.AreEqual(expected, actual);
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "所在城市");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual("北京", diffItem?.From.ToString());
+            Assert.AreEqual("上海", diffItem?.To.ToString());
 
+            diffItem = diffItems.FirstOrDefault(o => o.Path == "配偶.性别");
+            Assert.AreEqual("修改", diffItem?.Operation);
+            Assert.AreEqual("女性", diffItem?.From.ToString());
+            Assert.AreEqual("人妖", diffItem?.To.ToString());
 
-            compareResult.DifferentProperties.Clear();
-            Assert.AreEqual(compareResult.HasDifference, false);
-
-
-            var o1 = new Order() { Id = 1, OrderNo = "1111", Amount = 999M };
-            var o2 = new Order() { Id = 1, OrderNo = "1111", Amount = 999.00M };
-            compareResult = LocalizationTools.Compare(o1, o2);
-            Assert.AreEqual(false, compareResult.HasDifference);
+            Assert.AreEqual(5, diffItems.Length);
         }
     }
 
     /// <summary>
-    /// 自然人
+    /// 人类
     /// </summary>
     public class Person
     {
         /// <summary>
-        ///  唯一性标识
-        /// </summary>
-        public int Id { get; set; }
-
-        /// <summary>
-        /// 名字, 在 summary 里可能会被加入各种其他说明, 所以用 [DisplayName] 来替换
-        /// </summary>
-        [DisplayName("名字")]
-        public string Name { get; set; }
-
-#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
-        public DateTime Birthdate { get; set; } // 测试没有任何 别名 的情况
-#pragma warning restore CS1591 // 缺少对公共可见类型或成员的 XML 注释
-
-        /// <summary>
-        /// 所在城市
-        /// </summary>
-        public int CityId { get; set; }
-
-        /// <summary>
-        /// 性别
-        /// </summary>
-        public SexType Sex { get; set; }
-
-        /// <summary>
-        /// 身高
-        /// </summary>
-        public float Height { get; set; }
-
-        /// <summary>
-        /// 密码
-        /// </summary>
-        public string Password { get; set; }
-
-        /// <summary>
-        /// 是否可以登录
-        /// </summary>
-        public bool CanLogin { get; set; }
-
-        /// <summary>
-        /// 毕业时间
-        /// </summary>
-        public DateTimeOffset? GraduateDate { get; set; }
-    }
-
-    /// <summary>
-    /// 性别
-    /// </summary>
-    public enum SexType
-    {
-        /// <summary>
-        /// 男性
-        /// </summary>
-        Man = 0,
-
-        /// <summary>
-        /// 女性, balabalabalabalabalabalabalabalabala
-        /// </summary>
-        [EnumAlias("女性")]
-        Woman = 2,
-
-#pragma warning disable CS1591 // 缺少对公共可见类型或成员的 XML 注释
-        Ladyman = 3,
-#pragma warning restore CS1591 // 缺少对公共可见类型或成员的 XML 注释
-    }
-
-    /// <summary>
-    /// 员工
-    /// </summary>
-    public class Employe
-    {
-        /// <summary>
-        ///  唯一性标识
+        /// Id
         /// </summary>
         public int Id { get; set; }
 
@@ -305,38 +271,94 @@ namespace LocalizationToolsTest
         public string Name { get; set; }
 
         /// <summary>
+        /// 出生
+        /// </summary>
+        [DisplayName("出生日期")]
+        public DateTime Birthday { get; set; }
+
+        /// <summary>
         /// 性别
         /// </summary>
         public SexType Sex { get; set; }
 
         /// <summary>
-        /// 可否登录
+        /// 所在城市
         /// </summary>
-        [ToStringReplacePair(null, "未配置", true, "可以登录", false, "不能登录")]
-        public bool? CanLogin { get; set; }
+        public int CityId { get; set; }
 
         /// <summary>
-        /// 搭档
+        /// 是否启用
         /// </summary>
-        [ToStringReplacePair(null, "没有搭档")]
-        public Employe Partner { get; set; }
+        [LtsReplace(null, "未设置", true, "是", false, "否")]
+        public bool? IsAvailable { get; set; }
+
+        /// <summary>
+        /// 密码
+        /// </summary>
+        public string Password { get; set; }
+
+        /// <summary>
+        /// 爱好
+        /// </summary>
+        public List<string> Hobby { get; set; }
+
+        /// <summary>
+        /// 配偶
+        /// </summary>
+        [LtsReplace(null, "没有配偶")]
+        public Person Spouse { get; set; }
+
+        /// <summary>
+        /// 子女
+        /// </summary>
+        public List<Person> Children { get; set; } = new List<Person>();
     }
 
-    public class Order
+    /// <summary>
+    /// 性别
+    /// </summary>
+    public enum SexType
     {
-        /// <summary>
-        /// Id
-        /// </summary>
-        public int Id { get; set; }
+        Unknown = 0,
 
+        [LtsEnumAlias("男性")]
+        Man = 1,
         /// <summary>
-        /// 订单编号
+        /// 女性
         /// </summary>
-        public string OrderNo { get; set; }
+        Woman = 2,
+        /// <summary>
+        /// 人妖
+        /// </summary>
+        //[EnumAlias("人妖")]
+        Ladyman = 3,
+    }
 
-        /// <summary>
-        /// 订单金额
-        /// </summary>
-        public decimal Amount { get; set; }
+
+    /// <summary>
+    /// 模拟从数据库读出 City Name
+    /// </summary>
+    public class PersonCityLocalization : ILocalizationToString
+    {
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        {
+            // 忽略 replacePairs, 全部从数据库读取
+
+            var orm = context.State; // 假设传入state 是 orm
+            string stringValue;
+            if (object.Equals(orginalValue, 10))
+            {
+                stringValue = "北京";
+            }
+            else if (object.Equals(orginalValue, 21))
+            {
+                stringValue = "上海";
+            }
+            else
+            {
+                stringValue = $"未知城市Id={orginalValue}";
+            }
+            return Help.FormatStringValue(stringValue);
+        }
     }
 }

@@ -3,12 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>LocalizationTools</PackageId>
-    <Version>1.1.1</Version>
+    <Version>2.0.0</Version>
     <Authors>zhouandke</Authors>
     <Company>YY</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright></Copyright>
-    <Description>ToString() 使用中文注释来代替 属性名称, 并提供一个简单的比较工具</Description>
+    <Description>ToString() 使用中文注释来代替 属性名称, 并提供一个简单的Json比较工具</Description>
     <PackageProjectUrl>https://github.com/zhouandke/LocalizationTools</PackageProjectUrl>
     <RepositoryUrl>https://github.com/zhouandke/LocalizationTools</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>

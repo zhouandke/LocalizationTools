@@ -12,7 +12,7 @@ namespace Localization2
                 return $"{customLocalizationType.Name} must be ILocalizationToString";
             }
 
-            if (customLocalizationType.GetConstructor(new Type[0]) == null)
+            if (customLocalizationType.GetConstructor(Array.Empty<Type>()) == null)
             {
                 return $"{customLocalizationType.Name} must has a parameterless Constructor";
             }

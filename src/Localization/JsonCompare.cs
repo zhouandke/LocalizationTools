@@ -7,7 +7,14 @@ namespace Localization2
 {
     public enum ArrayDiffMode
     {
+        /// <summary>
+        /// 数组整体比较
+        /// </summary>
         Entire = 0,
+
+        /// <summary>
+        /// 数组每个Item单独比较
+        /// </summary>
         EvertyItem = 1
     }
 
@@ -31,7 +38,7 @@ namespace Localization2
             return new DiffItem()
             {
                 Path = path,
-                Operation = "新增",
+                Operation = "增加",
                 From = null,
                 To = to
             };
@@ -79,12 +86,21 @@ namespace Localization2
             ArrayDiffMode = rrayDiffMode;
         }
 
+        /// <summary>
+        /// 不能传入 customPropertyValues, 所以推荐 Compare(string fromJson, string toJson)
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="ignorePaths"></param>
+        /// <returns></returns>
         public DiffItem[] Compare<T>(T from, T to, params string[] ignorePaths)
         {
             var fromJson = Lts.Default.Localization(from, null, ignorePaths: ignorePaths);
             var toJson = Lts.Default.Localization(to, null, ignorePaths: ignorePaths);
             return Compare(fromJson, toJson);
         }
+
 
         public DiffItem[] Compare(string fromJson, string toJson)
         {

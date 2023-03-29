@@ -4,7 +4,7 @@ namespace Localization2
 {
     public abstract class LocalizationBuilderBase
     {
-        protected ILts lts;
+        protected readonly ILts lts;
 
         protected LocalizationBuilderBase(ILts lts)
         {

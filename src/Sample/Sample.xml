@@ -16,12 +16,12 @@
         </member>
         <member name="P:SampleConsole.Person.Name">
             <summary>
-            名字
+            名称
             </summary>
         </member>
         <member name="P:SampleConsole.Person.Birthday">
             <summary>
-            出生
+            出生日期
             </summary>
         </member>
         <member name="P:SampleConsole.Person.Sex">
@@ -74,9 +74,9 @@
             人妖
             </summary>
         </member>
-        <member name="T:SampleConsole.PersonBirthdayLocalization">
+        <member name="T:SampleConsole.PersonCityLocalization">
             <summary>
-            Person.Birthday 没有设置有效值的话, 显示 未设置
+            模拟从数据库读出 City Name
             </summary>
         </member>
     </members>

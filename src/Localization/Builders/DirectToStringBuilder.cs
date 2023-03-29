@@ -8,6 +8,8 @@ namespace Localization2
     {
         private readonly HashSet<Type> directToStringTypes = new HashSet<Type>()
         {
+            typeof(object),
+
             typeof(IntPtr),
             typeof(UIntPtr),
             typeof(IntPtr?),
@@ -76,7 +78,7 @@ namespace Localization2
 
     public class DirectToString : ILocalizationToString
     {
-        public string ToLocalization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
         {
             string stringValue;
             var replacePair = replacePairs?.FirstOrDefault(o => object.Equals(o.Orginal, orginalValue));

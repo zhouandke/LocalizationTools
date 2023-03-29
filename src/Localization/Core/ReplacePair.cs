@@ -1,6 +1,5 @@
 ﻿namespace Localization2
 {
-
     public class ReplacePair
     {
         public ReplacePair(object orginal, string replace)

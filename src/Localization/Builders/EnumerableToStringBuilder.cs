@@ -8,7 +8,7 @@ namespace Localization2
         public EnumerableToStringBuilder(ILts lts) : base(lts)
         {}
 
-        public override double MatchOrder => 200;
+        public override double MatchOrder => 300;
 
         public override bool IsMatch(Type type)
         {
@@ -24,7 +24,7 @@ namespace Localization2
 
     public class EnumerableToString : ILocalizationToString
     {
-        public string ToLocalization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
         {
             var enumerable = orginalValue as System.Collections.IEnumerable;
             if (enumerable == null)
@@ -39,7 +39,7 @@ namespace Localization2
                 if (item != null)
                 {
                     var typeInfo = context.Root.GetTypeInfo(item.GetType());
-                    stringList.Add(typeInfo.Localizationer.ToLocalization(item, context, $"{pathForReplaceValue}[{index}]", replacePairs, pathForIgnore));
+                    stringList.Add(typeInfo.Localizationer.Localization(item, context, $"{pathForReplaceValue}[{index}]", replacePairs, pathForIgnore));
                 }
                 else
                 {

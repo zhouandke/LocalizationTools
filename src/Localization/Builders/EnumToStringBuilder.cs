@@ -13,7 +13,7 @@ namespace Localization2
         public EnumToStringBuilder(ILts lts) : base(lts)
         { }
 
-        public override double MatchOrder => 300;
+        public override double MatchOrder => 200;
 
         public override bool IsMatch(Type type)
         {
@@ -69,7 +69,7 @@ namespace Localization2
             EnumValues = enumValues;
         }
 
-        public string ToLocalization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
+        public string Localization(object orginalValue, LocalizationStringContext context, string pathForReplaceValue, ReplacePair[] replacePairs, string pathForIgnore)
         {
             var replacePair = replacePairs?.FirstOrDefault(o => object.Equals(o.Orginal, orginalValue));
             if (replacePair != null)
